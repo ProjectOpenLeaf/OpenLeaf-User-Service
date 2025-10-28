@@ -13,4 +13,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByKeycloakId(String keycloakId);
     boolean existsByKeycloakId(String keycloakId);
     List<UserEntity> findByRolesContaining(String role); // For therapists
+    List<UserEntity> findAllByRoles(String role);
 }

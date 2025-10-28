@@ -18,12 +18,8 @@ public class GetAllTherapistsImpl implements GetAllTherapists {
 
     @Override
     public List<User> getAllTherapists() {
-        // Note: This currently returns ALL users
-        // Role filtering (therapist vs patient) happens in Keycloak
-        // For now, frontend will need to manually identify therapists
-        // Or you can add a 'role' column to UserEntity in the future
-
-        List<UserEntity> entities = userRepository.findAll();
+        // ✅ Efficient: directly fetch from DB only users with therapist role
+        List<UserEntity> entities = userRepository.findAllByRoles("client_therapist");
 
         return entities.stream()
                 .map(this::toUser)

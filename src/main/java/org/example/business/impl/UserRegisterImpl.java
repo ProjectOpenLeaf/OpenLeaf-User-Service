@@ -8,6 +8,7 @@ import org.example.persistance.entity.UserEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -17,21 +18,19 @@ public class UserRegisterImpl implements UserRegister {
 
     @Override
     public User register(String keycloakId, String username, String email,
-                         String firstName, String lastName) {
+                         String firstName, String lastName, Set<String> roles) {
 
-        if (userRepository.existsByKeycloakId(keycloakId)) {
-            UserEntity existingUser = userRepository.findByKeycloakId(keycloakId).get();
-            return toUser(existingUser);
-        }
+        UserEntity userEntity = userRepository.findByKeycloakId(keycloakId)
+                .orElse(UserEntity.builder()
+                        .keycloakId(keycloakId)
+                        .username(username)
+                        .email(email)
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        .createdAt(LocalDateTime.now())
+                        .build());
 
-        UserEntity userEntity = UserEntity.builder()
-                .keycloakId(keycloakId)
-                .username(username)
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .createdAt(LocalDateTime.now())
-                .build();
+        userEntity.setRoles(roles);
 
         UserEntity savedEntity = userRepository.save(userEntity);
 
@@ -46,6 +45,7 @@ public class UserRegisterImpl implements UserRegister {
                 .email(entity.getEmail())
                 .firstName(entity.getFirstName())
                 .lastName(entity.getLastName())
+                .roles(entity.getRoles())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }

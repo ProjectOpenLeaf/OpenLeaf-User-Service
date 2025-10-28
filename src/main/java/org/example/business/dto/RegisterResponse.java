@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -19,4 +20,5 @@ public class RegisterResponse {
     private String lastName;
     private LocalDateTime createdAt;
     private String message;
+    private Set<String> roles; // NEW
 }

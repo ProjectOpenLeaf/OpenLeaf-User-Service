@@ -5,17 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
+public class UserListResponse {
+    private Long id;
     private String keycloakId;
     private String username;
     private String email;
     private String firstName;
     private String lastName;
-    private Set<String> roles; // NEW
+    private LocalDateTime createdAt;
 }

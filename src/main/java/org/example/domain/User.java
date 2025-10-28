@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -21,4 +22,5 @@ public class User {
     private String firstName;
     private String lastName;
     private LocalDateTime createdAt;
+    private Set<String> roles; // NEW
 }

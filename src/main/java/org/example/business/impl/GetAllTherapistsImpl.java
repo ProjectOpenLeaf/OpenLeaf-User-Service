@@ -39,6 +39,7 @@ public class GetAllTherapistsImpl implements GetAllTherapists {
                 .firstName(entity.getFirstName())
                 .lastName(entity.getLastName())
                 .createdAt(entity.getCreatedAt())
+                .roles(entity.getRoles())
                 .build();
     }
 }

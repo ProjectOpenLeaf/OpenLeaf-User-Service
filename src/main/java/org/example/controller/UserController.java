@@ -39,6 +39,7 @@ public class UserController {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .createdAt(user.getCreatedAt())
+                .roles(user.getRoles())
                 .message("User registered successfully")
                 .build();
 
@@ -59,6 +60,7 @@ public class UserController {
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
                         .createdAt(user.getCreatedAt())
+                        .roles(user.getRoles())
                         .build())
                 .collect(Collectors.toList());
 

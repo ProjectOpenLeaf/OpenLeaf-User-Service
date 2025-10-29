@@ -1,8 +1,17 @@
-
 server:
   port: 8083
 
 spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    connection-timeout: 10000
+    requested-heartbeat: 30
+    listener:
+      simple:
+        default-requeue-rejected: false
   application:
     name: user-service
   
@@ -35,7 +44,14 @@ management:
       prometheus:
         enabled: true
     tags:
-      application: ${spring.application.name}z
+      application: ${spring.application.name}
+
+keycloak:
+  auth-server-url: http://localhost:8080
+  realm: OpenLeaf
+  admin:
+    client-id: admin-cli
+    client-secret: ImrQWMuoQyBkJborBMsQ3gnf1dzLdJgK
 
 logging:
   level:

@@ -66,14 +66,14 @@ sonar {
         property 'sonar.tests', 'src/test/java'
         property 'sonar.java.binaries', 'build/classes/java/main'
 
-        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
+        property 'sonar.coverage.jacoco.xmlReportPaths', "$buildDir/reports/jacoco/test/jacocoTestReport.xml"
 
         property 'sonar.exclusions', '**/config/**, **/dto/**, **/entity/**, **/exception/**, **/*Application.java'
         property 'sonar.coverage.exclusions', '**/config/**, **/dto/**, **/entity/**, **/exception/**, **/*Application.java'
     }
 }
 
-tasks.named('sonar') {
+tasks.named('sonarqube') {
     dependsOn test, jacocoTestReport
 }
 

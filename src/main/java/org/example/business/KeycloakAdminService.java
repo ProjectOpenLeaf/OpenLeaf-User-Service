@@ -69,7 +69,7 @@ public class KeycloakAdminService {
      * Get admin access token from Keycloak
      * Uses client credentials grant
      */
-    private String getAdminToken() {
+    public String getAdminToken() {
         try {
             String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token",
                     keycloakServerUrl, realm);
@@ -105,7 +105,7 @@ public class KeycloakAdminService {
     /**
      * Inner class to deserialize Keycloak token response
      */
-    private static class TokenResponse {
+    public static class TokenResponse {
         private String access_token;
 
         public String getAccessToken() {

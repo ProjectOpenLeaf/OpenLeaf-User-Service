@@ -39,6 +39,7 @@ jacocoTestReport {
                     '**/entity/**',
                     '**/exception/**',
                     '**/persistance/**',
+                    '**/controller/**',
                     '**/*Application.class'
             ])
         }))

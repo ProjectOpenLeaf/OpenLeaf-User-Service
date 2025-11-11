@@ -73,6 +73,21 @@ jobs:
           path: build/reports/jacoco/test/
 
       # ========================================
+      # 🔒 Snyk Dependency Vulnerability Scan
+      # ========================================
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Authenticate with Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Test (Gradle Dependencies)
+        run: snyk test --all-projects --severity-threshold=medium
+
+      - name: Monitor Project in Snyk Dashboard
+        run: snyk monitor --all-projects
+
+      # ========================================
       # Docker Build & Push (only on main)
       # ========================================
       - name: Set up Docker Buildx
@@ -99,6 +114,7 @@ jobs:
 
       - name: Build and push Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: build-push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -108,6 +124,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ========================================
+      # 🐳 Snyk Container Vulnerability Scan
+      # ========================================
+      - name: Snyk Container Test
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: snyk container test ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --file=Dockerfile --severity-threshold=medium
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Container Monitor
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: snyk container monitor ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --file=Dockerfile
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Image published summary
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

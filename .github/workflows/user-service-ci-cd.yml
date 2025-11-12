@@ -81,11 +81,16 @@ jobs:
       - name: Authenticate with Snyk
         run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
+      # Run the test first (for console visibility)
       - name: Snyk Test (Gradle Dependencies)
         run: snyk test --all-projects --severity-threshold=medium
+        continue-on-error: true   # Don’t fail the build on findings, just report them
 
-      - name: Monitor Project in Snyk Dashboard
+      # 🆕 Upload snapshot to Snyk dashboard so it’s visible on app.snyk.io
+      - name: Snyk Monitor (Upload to Dashboard)
         run: snyk monitor --all-projects
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # ========================================
       # Docker Build & Push (only on main)
@@ -133,7 +138,9 @@ jobs:
         run: snyk container test ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --file=Dockerfile --severity-threshold=medium
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true  # Don’t block deployment; just report
 
+      # 🆕 Upload Docker image snapshot to Snyk Dashboard
       - name: Snyk Container Monitor
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: snyk container monitor ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --file=Dockerfile

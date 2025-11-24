@@ -103,7 +103,6 @@ public class UserController {
 
     @GetMapping("/therapists")
     public ResponseEntity<List<UserListResponse>> getAllUsers() {
-        // Returns all users - frontend should filter by role if needed
         List<User> users = getAllTherapists.getAllTherapists();
 
         List<UserListResponse> responses = users.stream()

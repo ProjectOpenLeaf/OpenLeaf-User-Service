@@ -16,10 +16,10 @@ spring:
     name: user-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/openleaf_users
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/openleaf_users}
     driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: postgres
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
 
   
   jpa:

@@ -1,0 +1,210 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-profile-service
+  namespace: openleaf
+  labels:
+    app: user-profile-service
+    tier: backend
+    version: v1
+spec:
+  # Start with 2 replicas, HPA will scale up/down
+  replicas: 2
+
+  # Rolling update strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Allow 1 extra pod during updates
+      maxUnavailable: 0  # Keep all pods running during updates
+
+  selector:
+    matchLabels:
+      app: user-profile-service
+
+  template:
+    metadata:
+      labels:
+        app: user-profile-service
+        tier: backend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+        prometheus.io/path: "/actuator/prometheus"
+
+    spec:
+      # Anti-affinity to spread pods across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - user-profile-service
+                topologyKey: kubernetes.io/hostname
+
+      containers:
+        - name: user-profile-service
+          image: ghcr.io/projectopenleaf/openleaf-user-profile-service:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 8083
+              protocol: TCP
+
+          # Environment variables for Spring Boot
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres-service:5432/openleaf_users"
+
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "postgres"
+
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "http://keycloak:8080"
+
+            - name: KEYCLOAK_REALM
+              value: "OpenLeaf"
+
+            - name: KEYCLOAK_CLIENT_ID
+              value: "ImrQWMuoQyBkJborBMsQ3gnf1dzLdJgK"
+
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+
+          # Resource requests and limits (CRITICAL for HPA)
+          resources:
+            requests:
+              cpu: 250m      # 0.25 CPU cores
+              memory: 768Mi
+            limits:
+              cpu: 1000m     # 1 CPU core max
+              memory: 1536Mi
+
+          # Liveness probe - restart if unhealthy
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness probe - remove from load balancer if not ready
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Startup probe - for slow-starting applications
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8083
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30  # 300 seconds (5 minutes) max startup time
+
+      # Image pull secrets for private registry (if needed)
+      imagePullSecrets:
+      - name: ghcr-secret
+
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-profile-service
+  namespace: openleaf
+  labels:
+    app: user-profile-service
+spec:
+  type: ClusterIP
+  selector:
+    app: user-profile-service
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+      protocol: TCP
+  # Session affinity for sticky sessions (if needed)
+  sessionAffinity: None
+
+---
+# Horizontal Pod Autoscaler - automatically scales based on CPU/Memory
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-profile-service-hpa
+  namespace: openleaf
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-profile-service
+
+  # Minimum and maximum number of replicas
+  minReplicas: 2
+  maxReplicas: 20  # Adjust based on your load testing results
+
+  # Scaling metrics
+  metrics:
+    # Scale based on CPU utilization
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # Target 70% CPU usage
+
+    # Scale based on Memory utilization
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80  # Target 80% memory usage
+
+  # Scaling behavior - control how fast scaling happens
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Wait 60s before scaling up
+      policies:
+        - type: Pods
+          value: 2              # Add max 2 pods at a time
+          periodSeconds: 60     # Every 60 seconds
+        - type: Percent
+          value: 50             # Or increase by 50%
+          periodSeconds: 60
+      selectPolicy: Max       # Use the policy that scales up most
+
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 minutes before scaling down
+      policies:
+        - type: Pods
+          value: 1              # Remove max 1 pod at a time
+          periodSeconds: 60     # Every 60 seconds
+        - type: Percent
+          value: 10             # Or decrease by 10%
+          periodSeconds: 60
+      selectPolicy: Min       # Use the policy that scales down least

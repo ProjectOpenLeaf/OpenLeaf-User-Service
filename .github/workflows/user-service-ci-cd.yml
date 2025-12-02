@@ -146,18 +146,27 @@ jobs:
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          
+
       # 🔒 Trivy Container Image Scanning
       # ========================================
+      - name: Lowercase image name for Trivy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: lowercase
+        run: |
+          echo "image_ref=$(echo 'ghcr.io/${{ github.repository_owner }}/openleaf-user-profile-service:latest' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Run Trivy vulnerability scanner
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
+          image-ref: '${{ steps.lowercase.outputs.image_ref }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           vuln-type: 'os,library'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
       - name: Upload Trivy results to GitHub Security
@@ -171,6 +180,9 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
+          image-ref: '${{ steps.lowercase.outputs.image_ref }}'
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

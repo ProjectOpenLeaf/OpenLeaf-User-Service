@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-profile-service
+  name: api-gateway
   namespace: openleaf
   labels:
-    app: user-profile-service
-    tier: backend
+    app: api-gateway
+    tier: gateway
     version: v1
 spec:
   replicas: 2
@@ -17,17 +17,17 @@ spec:
 
   selector:
     matchLabels:
-      app: user-profile-service
+      app: api-gateway
 
   template:
     metadata:
       labels:
-        app: user-profile-service
-        tier: backend
+        app: api-gateway
+        tier: gateway
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8083"
+        prometheus.io/port: "8080"
         prometheus.io/path: "/actuator/prometheus"
 
     spec:
@@ -41,24 +41,30 @@ spec:
                     - key: app
                       operator: In
                       values:
-                        - user-profile-service
+                        - api-gateway
                 topologyKey: kubernetes.io/hostname
 
       containers:
-        - name: user-profile-service
-          image: ghcr.io/projectopenleaf/openleaf-user-profile-service:latest
+        - name: api-gateway
+          image: ghcr.io/projectopenleaf/openleaf-api-gateway:latest
           imagePullPolicy: Always
 
           ports:
             - name: http
-              containerPort: 8083
+              containerPort: 8080
               protocol: TCP
 
-          envFrom:
-            - configMapRef:
-                name: user-service-config
-            - secretRef:
-                name: user-service-secret
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+
+            - name: SPRING_CONFIG_LOCATION
+              value: "classpath:/application.yml,/config/application.yml"
+
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
 
           resources:
             requests:
@@ -71,7 +77,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 8083
+              port: 8080
             initialDelaySeconds: 60
             periodSeconds: 30
             timeoutSeconds: 10
@@ -80,11 +86,16 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8083
+              port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
+
+      volumes:
+        - name: config
+          configMap:
+            name: api-gateway-config
 
       imagePullSecrets:
         - name: ghcr-secret
@@ -93,31 +104,32 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-profile-service
+  name: api-gateway
   namespace: openleaf
   labels:
-    app: user-profile-service
+    app: api-gateway
 spec:
-  type: ClusterIP
+  type: LoadBalancer  # Expose externally
   selector:
-    app: user-profile-service
+    app: api-gateway
   ports:
     - name: http
-      port: 8083
-      targetPort: 8083
+      port: 8080
+      targetPort: 8080
       protocol: TCP
+  sessionAffinity: None
 
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: user-profile-service-hpa
+  name: api-gateway-hpa
   namespace: openleaf
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: user-profile-service
+    name: api-gateway
 
   minReplicas: 2
   maxReplicas: 20

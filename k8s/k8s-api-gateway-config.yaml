@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: openleaf
+data:
+  application.yml: |
+    server:
+      port: 8080
+      http2:
+        enabled: true
+
+    spring:
+      application:
+        name: api-gateway
+
+      cloud:
+        gateway:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                allowCredentials: true
+                maxAge: 3600
+
+          routes:
+            - id: journal-service
+              uri: http://journal-service:8082
+              predicates:
+                - Path=/api/journals/**
+              filters:
+                - StripPrefix=2
+                - UserHeader
+
+            - id: user-service
+              uri: http://user-profile-service:8083
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - StripPrefix=2
+                - UserHeader
+
+            - id: ai-summarization-service
+              uri: http://ai-summarization-service:8084
+              predicates:
+                - Path=/api/python/**
+              filters:
+                - StripPrefix=2
+
+            - id: assignment-service
+              uri: http://assignment-service:8085
+              predicates:
+                - Path=/api/assignments/**
+              filters:
+                - StripPrefix=2
+                - UserHeader
+
+            - id: scheduling-service
+              uri: http://scheduling-service:8087
+              predicates:
+                - Path=/api/appointments/**
+              filters:
+                - StripPrefix=2
+                - UserHeader
+
+      security:
+        oauth2:
+          resourceserver:
+            jwt:
+              issuer-uri: http://keycloak:8080/realms/OpenLeaf
+              jwk-set-uri: http://keycloak:8080/realms/OpenLeaf/protocol/openid-connect/certs
+
+    jwt:
+      auth:
+        converter:
+          resource-id: openleaf-rest-api
+          principle-attribute: preferred_username
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,prometheus,metrics
+      endpoint:
+        prometheus:
+          enabled: true
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+        tags:
+          application: ${spring.application.name}

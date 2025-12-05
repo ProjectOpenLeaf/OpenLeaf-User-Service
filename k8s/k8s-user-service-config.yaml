@@ -1,125 +1,24 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: openleaf
-  labels:
-    name: openleaf
-
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
   name: user-service-config
   namespace: openleaf
 data:
-  # Database configuration
-  database.url: "jdbc:postgresql://postgres-service:5432/openleaf_users"
-
-  # Keycloak configuration
-  keycloak.url: "http://keycloak:8080"
-  keycloak.realm: "OpenLeaf"
-  keycloak.client-id: "ImrQWMuoQyBkJborBMsQ3gnf1dzLdJgK"
-
-  # RabbitMQ configuration (for service-to-service communication)
-  rabbitmq.host: "rabbitmq-service"
-  rabbitmq.port: "5672"
-
-  # Application configuration
-  server.port: "8083"
-  spring.profiles.active: "production"
-
-  # Logging configuration
-  logging.level.root: "INFO"
-  logging.level.com.openleaf: "DEBUG"
+  SPRING_PROFILES_ACTIVE: "production"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-users:5432/openleaf_users"
+  KEYCLOAK_URL: "http://keycloak:8080"
+  SPRING_RABBITMQ_HOST: "rabbitmq"
+  SPRING_RABBITMQ_PORT: "5672"
 
 ---
-# IMPORTANT: In production, use proper secret management (Azure Key Vault, HashiCorp Vault, etc.)
-# For now, base64 encode your secrets: echo -n 'your-secret' | base64
 apiVersion: v1
 kind: Secret
 metadata:
-  name: user-service-secrets
+  name: user-service-secret
   namespace: openleaf
 type: Opaque
-data:
-  database.username: cG9zdGdyZXM=
-  database.password: cG9zdGdyZXM=
-  keycloak.client-secret: SW1yUVdNdW9ReUJrSmJvckJNc1EzZ25mMWR6TGRKZ0s=
-  rabbitmq.username: Z3Vlc3Q=
-  rabbitmq.password: Z3Vlc3Q=
-
----
-# PodDisruptionBudget - ensures minimum availability during voluntary disruptions
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: user-profile-service-pdb
-  namespace: openleaf
-spec:
-  minAvailable: 1  # Always keep at least 1 pod running
-  selector:
-    matchLabels:
-      app: user-profile-service
-
----
-# NetworkPolicy - optional, for network security
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: user-profile-service-netpol
-  namespace: openleaf
-spec:
-  podSelector:
-    matchLabels:
-      app: user-profile-service
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    # Allow traffic from API Gateway
-    - from:
-        - podSelector:
-            matchLabels:
-              app: api-gateway
-      ports:
-        - protocol: TCP
-          port: 8083
-    # Allow traffic from other microservices
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              name: openleaf
-      ports:
-        - protocol: TCP
-          port: 8083
-  egress:
-    # Allow DNS
-    - to:
-        - namespaceSelector: {}
-      ports:
-        - protocol: UDP
-          port: 53
-    # Allow PostgreSQL
-    - to:
-        - podSelector:
-            matchLabels:
-              app: postgres
-      ports:
-        - protocol: TCP
-          port: 5432
-    # Allow Keycloak
-    - to:
-        - podSelector:
-            matchLabels:
-              app: keycloak
-      ports:
-        - protocol: TCP
-          port: 8080
-    # Allow RabbitMQ
-    - to:
-        - podSelector:
-            matchLabels:
-              app: rabbitmq
-      ports:
-        - protocol: TCP
-          port: 5672
+stringData:
+  SPRING_DATASOURCE_USERNAME: "postgres"
+  SPRING_DATASOURCE_PASSWORD: "postgres"
+  SPRING_RABBITMQ_USERNAME: "guest"
+  SPRING_RABBITMQ_PASSWORD: "guest"

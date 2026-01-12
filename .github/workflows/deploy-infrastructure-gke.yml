@@ -52,7 +52,7 @@ jobs:
       - name: Wait for databases
         run: |
           echo "⏳ Waiting for databases..."
-          kubectl wait --for=condition=ready pod -l app=postgres-user -n openleaf --timeout=600s
+          kubectl wait --for=condition=ready pod -l app=postgres-users -n openleaf --timeout=600s
           kubectl wait --for=condition=ready pod -l app=postgres-journal -n openleaf --timeout=600s
           kubectl wait --for=condition=ready pod -l app=postgres-assignment -n openleaf --timeout=600s
           kubectl wait --for=condition=ready pod -l app=postgres-scheduling -n openleaf --timeout=600s

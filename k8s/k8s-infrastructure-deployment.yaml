@@ -33,19 +33,20 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "128Mi"    # Reduced from 256Mi
+              cpu: "100m"        # Reduced from 250m
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"    # Reduced from 512Mi
+              cpu: "250m"        # Reduced from 500m
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "standard-rwo"  # ← ADD THIS LINE
         resources:
           requests:
-            storage: 5Gi
+            storage: 10Gi
 
 ---
 apiVersion: v1
@@ -97,19 +98,20 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "128Mi"    # Reduced from 256Mi
+              cpu: "100m"        # Reduced from 250m
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"    # Reduced from 512Mi
+              cpu: "250m"        # Reduced from 500m
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "standard-rwo"  # ← ADD THIS LINE
         resources:
           requests:
-            storage: 5Gi
+            storage: 10Gi
 
 ---
 apiVersion: v1
@@ -161,19 +163,20 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "128Mi"    # Reduced from 256Mi
+              cpu: "100m"        # Reduced from 250m
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"    # Reduced from 512Mi
+              cpu: "250m"        # Reduced from 500m
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "standard-rwo"  # ← ADD THIS LINE
         resources:
           requests:
-            storage: 5Gi
+            storage: 10Gi
 
 ---
 apiVersion: v1
@@ -225,19 +228,20 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "128Mi"    # Reduced from 256Mi
+              cpu: "100m"        # Reduced from 250m
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"    # Reduced from 512Mi
+              cpu: "250m"        # Reduced from 500m
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "standard-rwo"  # ← ADD THIS LINE
         resources:
           requests:
-            storage: 5Gi
+            storage: 10Gi
 
 ---
 apiVersion: v1
@@ -346,11 +350,11 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "384Mi"    # Reduced from 512Mi
+              cpu: "250m"        # Reduced from 500m
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              memory: "768Mi"    # Reduced from 1Gi
+              cpu: "500m"        # Reduced from 1000m
 
 ---
 apiVersion: v1

@@ -1,0 +1,107 @@
+name: Deploy All Services to GKE
+
+on:
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: ${{ secrets.GKE_CLUSTER_NAME }}
+  GKE_REGION: ${{ secrets.GKE_REGION }}
+
+jobs:
+  deploy-all-services:
+    name: Deploy All Microservices
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install GKE auth plugin
+        run: gcloud components install gke-gcloud-auth-plugin
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+            --region=${{ env.GKE_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+
+      - name: Create namespace
+        run: kubectl create namespace openleaf --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --namespace=openleaf \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy User Service
+        run: |
+          echo "Deploying User Service..."
+          kubectl apply -f k8s/k8s-user-service-config.yaml
+          kubectl apply -f k8s/k8s-user-service-deployment.yaml
+
+      - name: Deploy Journal Service
+        run: |
+          echo "Deploying Journal Service..."
+          kubectl apply -f k8s/k8s-journal-service-deployment.yaml
+
+      - name: Deploy Assignment Service
+        run: |
+          echo "Deploying Assignment Service..."
+          kubectl apply -f k8s/k8s-assignment-service-deployment.yaml
+
+      - name: Deploy Scheduling Service
+        run: |
+          echo "Deploying Scheduling Service..."
+          kubectl apply -f k8s/k8s-scheduling-service-deployment.yaml
+
+      - name: Deploy API Gateway
+        run: |
+          echo "Deploying API Gateway..."
+          kubectl apply -f k8s/k8s-api-gateway-config.yaml
+          kubectl apply -f k8s/k8s-api-gateway-deployment.yaml
+
+      - name: Wait for all deployments
+        run: |
+          echo "⏳ Waiting for all services to be ready..."
+          kubectl wait --for=condition=available deployment/user-profile-service -n openleaf --timeout=10m
+          kubectl wait --for=condition=available deployment/journal-service -n openleaf --timeout=10m
+          kubectl wait --for=condition=available deployment/assignment-service -n openleaf --timeout=10m
+          kubectl wait --for=condition=available deployment/scheduling-service -n openleaf --timeout=10m
+          kubectl wait --for=condition=available deployment/api-gateway -n openleaf --timeout=10m
+          echo "✅ All services ready!"
+
+      - name: Show deployment status
+        run: |
+          echo "### Deployment Status 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**All Pods:**" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n openleaf >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**All Services:**" >> $GITHUB_STEP_SUMMARY
+          kubectl get svc -n openleaf >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Ingress:**" >> $GITHUB_STEP_SUMMARY
+          kubectl get ingress -n openleaf >> $GITHUB_STEP_SUMMARY

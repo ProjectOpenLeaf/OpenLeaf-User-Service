@@ -88,29 +88,29 @@ spec:
 
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"    # Reduced from 512Mi
+              cpu: "200m"        # Reduced from 500m
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              memory: "512Mi"    # Reduced from 1Gi
+              cpu: "500m"
 
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8085
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8085
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+      #          livenessProbe:
+#            httpGet:
+#              path: /actuator/health
+#              port: 8085
+#            initialDelaySeconds: 60
+#            periodSeconds: 30
+#            timeoutSeconds: 10
+#            failureThreshold: 3
+#
+#          readinessProbe:
+#            httpGet:
+#              path: /actuator/health
+#              port: 8085
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#            failureThreshold: 3
 
       imagePullSecrets:
         - name: ghcr-secret
@@ -145,8 +145,8 @@ spec:
     kind: Deployment
     name: assignment-service
 
-  minReplicas: 2
-  maxReplicas: 20
+  minReplicas: 1      # Change from 2 - reduce startup load
+  maxReplicas: 10
 
   metrics:
     - type: Resource
@@ -165,10 +165,10 @@ spec:
 
   behavior:
     scaleUp:
-      stabilizationWindowSeconds: 60
+      stabilizationWindowSeconds: 300  # Wait 5 mins before scaling
       policies:
         - type: Pods
-          value: 2
+          value: 1           # Only add 1 pod at a time
           periodSeconds: 60
         - type: Percent
           value: 50

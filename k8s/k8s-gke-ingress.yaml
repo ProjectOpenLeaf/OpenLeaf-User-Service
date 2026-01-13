@@ -11,7 +11,7 @@ spec:
     service:
       name: api-gateway
       port:
-        number: 8443
+        number: 8081
   rules:
     - http:
         paths:
@@ -21,4 +21,4 @@ spec:
               service:
                 name: api-gateway
                 port:
-                  number: 8443
+                  number: 8081

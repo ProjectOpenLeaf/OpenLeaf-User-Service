@@ -33,11 +33,11 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "128Mi"    # Reduced from 256Mi
-              cpu: "100m"        # Reduced from 250m
+              memory: "128Mi"   # Half
+              cpu: "50m"        # Much lower - databases are mostly idle
             limits:
-              memory: "256Mi"    # Reduced from 512Mi
-              cpu: "250m"        # Reduced from 500m
+              memory: "256Mi"   # Half
+              cpu: "200m"       # Lower
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -98,11 +98,11 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "128Mi"    # Reduced from 256Mi
-              cpu: "100m"        # Reduced from 250m
+              memory: "128Mi"   # Half
+              cpu: "50m"        # Much lower - databases are mostly idle
             limits:
-              memory: "256Mi"    # Reduced from 512Mi
-              cpu: "250m"        # Reduced from 500m
+              memory: "256Mi"   # Half
+              cpu: "200m"       # Lower
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -163,11 +163,11 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "128Mi"    # Reduced from 256Mi
-              cpu: "100m"        # Reduced from 250m
+              memory: "128Mi"   # Half
+              cpu: "50m"        # Much lower - databases are mostly idle
             limits:
-              memory: "256Mi"    # Reduced from 512Mi
-              cpu: "250m"        # Reduced from 500m
+              memory: "256Mi"   # Half
+              cpu: "200m"       # Lower
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -228,11 +228,11 @@ spec:
               mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              memory: "128Mi"    # Reduced from 256Mi
-              cpu: "100m"        # Reduced from 250m
+              memory: "128Mi"   # Half
+              cpu: "50m"        # Much lower - databases are mostly idle
             limits:
-              memory: "256Mi"    # Reduced from 512Mi
-              cpu: "250m"        # Reduced from 500m
+              memory: "256Mi"   # Half
+              cpu: "200m"       # Lower
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -289,11 +289,11 @@ spec:
               value: "guest"
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
+              memory: "128Mi"   # Half
+              cpu: "50m"        # Much lower - databases are mostly idle
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"   # Half
+              cpu: "200m"       # Lower
 
 ---
 apiVersion: v1

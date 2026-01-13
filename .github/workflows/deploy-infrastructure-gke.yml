@@ -49,14 +49,34 @@ jobs:
       - name: Deploy infrastructure
         run: kubectl apply -f k8s/k8s-infrastructure-deployment.yaml
 
-      - name: Wait for databases
+      - name: Wait for databases (with debugging)
         run: |
           echo "⏳ Waiting for databases..."
-          kubectl wait --for=condition=ready pod -l app=postgres-users -n openleaf --timeout=600s
-          kubectl wait --for=condition=ready pod -l app=postgres-journal -n openleaf --timeout=600s
-          kubectl wait --for=condition=ready pod -l app=postgres-assignment -n openleaf --timeout=600s
-          kubectl wait --for=condition=ready pod -l app=postgres-scheduling -n openleaf --timeout=600s
-          echo "✅ Databases ready!"
+
+          # Show what pods exist
+          echo "=== Current Pods ==="
+          kubectl get pods -n openleaf
+
+          # Show pod details
+          echo ""
+          echo "=== Pod Details ==="
+          kubectl describe pods -n openleaf -l app=postgres-users
+
+          # Show PVC status (most likely issue!)
+          echo ""
+          echo "=== Persistent Volume Claims ==="
+          kubectl get pvc -n openleaf
+
+          # Show events (shows errors)
+          echo ""
+          echo "=== Recent Events ==="
+          kubectl get events -n openleaf --sort-by='.lastTimestamp' | tail -20
+
+          # Now try to wait (will probably show the real error)
+          kubectl wait --for=condition=ready pod -l app=postgres-users -n openleaf --timeout=600s || true
+          kubectl wait --for=condition=ready pod -l app=postgres-journal -n openleaf --timeout=600s || true
+          kubectl wait --for=condition=ready pod -l app=postgres-assignment -n openleaf --timeout=600s || true
+          kubectl wait --for=condition=ready pod -l app=postgres-scheduling -n openleaf --timeout=600s || true
 
       - name: Wait for RabbitMQ
         run: |

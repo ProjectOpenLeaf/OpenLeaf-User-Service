@@ -27,7 +27,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
+        prometheus.io/port: "8081"
         prometheus.io/path: "/actuator/prometheus"
 
     spec:
@@ -51,7 +51,7 @@ spec:
 
           ports:
             - name: http
-              containerPort: 8443
+              containerPort: 8081
               protocol: TCP
 
           env:
@@ -114,8 +114,8 @@ spec:
     app: api-gateway
   ports:
     - name: http
-      port: 8443
-      targetPort: 8443
+      port: 8081
+      targetPort: 8081
       protocol: TCP
   sessionAffinity: None
 

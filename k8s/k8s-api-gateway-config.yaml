@@ -6,7 +6,7 @@ metadata:
 data:
   application.yml: |
     server:
-      port: 8443
+      port: 8081
       http2:
         enabled: true
 
